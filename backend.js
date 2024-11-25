@@ -1,6 +1,6 @@
 import bcrypt from 'https://cdn.skypack.dev/bcryptjs';
 
-const allowedOrigin = 'https://front.akeyo.io'; // Replace with your frontend URL
+const allowedOrigin = 'https://front.akeyo.io/'; // Replace with your frontend URL
 // const sharedSecret = 'your-shared-secret'; // Replace with your secure shared secret
 const upstashUrl = 'live-dog-21100.upstash.io'; // Replace with your Upstash Redis REST API URL
 const upstashToken = 'AVJsAAIjcDEwZjBlYzU5NjA4MDY0ZDAzYjBmZTIyMWNhNWMxYTIzMnAxMA'; // Replace with your Upstash Redis token
