@@ -1,3 +1,28 @@
+self.addEventListener('fetch', async (event) => {
+  const url = new URL(event.request.url);
+  const path = url.pathname.slice(1); // Get the path after the leading '/'
+  const headers = event.request.headers;
+
+  if (path === 'signup') {
+    // Handle signup logic
+    // Respond with JSON only
+    event.respondWith(createResponse({ message: 'Signup endpoint hit' }));
+  } else if (path === 'todos') {
+    // Handle todos logic
+    // Return a JSON response for todos
+    event.respondWith(createResponse({ todos: 'Sample todo list' }));
+  } else {
+    // Catch-all: return 404 or redirect to index.html
+    event.respondWith(
+      new Response('Not Found', {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    );
+  }
+});
+
+/***
 // Redirect all API requests to the index.html page with query params
 self.addEventListener("fetch", async (event) => {
   const url = new URL(event.request.url);
