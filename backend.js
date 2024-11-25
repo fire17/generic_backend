@@ -15,6 +15,7 @@ function createResponse(data, status = 200, origin = null) {
     headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   }
+  data = {...data || {} , origin: origin}
   return new Response(JSON.stringify(data), { status, headers });
 }
 
@@ -55,9 +56,9 @@ self.addEventListener('fetch', async (event) => {
   const origin = headers.get('Origin');
   const cors_origin = event.request.headers.get('Origin');
 
-  // Handle CORS preflight requests
+  // Handle CORS preflight requests // REMOVE || true
   if (event.request.method === 'OPTIONS') {
-    if (cors_origin === allowedOrigin) {
+    if (cors_origin === allowedOrigin || true ) {
       event.respondWith(createResponse(null, 204, origin));
     } else {
       event.respondWith(createResponse({ error: `x1 Access denied from origin: cors: ${cors_origin}, ${origin}` }, 403));
@@ -65,8 +66,8 @@ self.addEventListener('fetch', async (event) => {
     return;
   }
 
-  // Restrict access to allowed origin
-  if (origin !== allowedOrigin) {
+  // Restrict access to allowed origin // REMOVE || true
+  if (origin !== allowedOrigin || true ) {
     event.respondWith(createResponse({ error: `x2 Access denied from origin: ${origin}, cors: ${cors_origin}` }, 403));
     //event.respondWith(new Response('Forbidden', { status: 403 }));
     return;
@@ -108,7 +109,8 @@ self.addEventListener('fetch', async (event) => {
     }
 
     const token = generateToken(username);
-    event.respondWith(createResponse({ token }, 200, origin));
+    //event.respondWith(createResponse({ token }, 200, origin));
+    event.respondWith(createResponse({ token, debugOrigin: origin }, 200, origin));
   } else if (path === 'userdata') {
     // Fetch user metadata
     const token = headers.get('Authorization')?.split(' ')[1];
@@ -119,7 +121,8 @@ self.addEventListener('fetch', async (event) => {
     }
 
     const userdata = await redisRequest('hget', `users/${username}`, 'userdata');
-    event.respondWith(createResponse(JSON.parse(userdata.result || '{}'), 200, origin));
+    //event.respondWith(createResponse(JSON.parse(userdata.result || '{}'), 200, origin));
+    event.respondWith(createResponse({ ...JSON.parse(userdata.result || '{}'), debugOrigin: origin }, 200, origin));
   } else if (path === 'todos') {
     const token = headers.get('Authorization')?.split(' ')[1];
     const username = verifyToken(token);
@@ -136,7 +139,8 @@ self.addEventListener('fetch', async (event) => {
       const todos = await redisRequest('hget', `users/${username}`, 'todos');
       const todosList = JSON.parse(todos.result || '[]');
       todosList.push({
-        text,
+//        text,
+        text, debugOrigin: origin,
         creationDate: new Date().toISOString(),
         checked: false,
       });
@@ -159,7 +163,9 @@ self.addEventListener('fetch', async (event) => {
         todosList[index].checked = !todosList[index].checked;
         await redisRequest('hset', `users/${username}`, 'todos', JSON.stringify(todosList));
       }
-      event.respondWith(createResponse({ success: true }, 200, origin));
+      // event.respondWith(createResponse({ success: true }, 200, origin));
+      event.respondWith(createResponse({ success: true, debugOrigin: origin }, 200, origin));
+
     }
   } else {
     event.respondWith(createResponse({ error: 'Invalid endpoint' }, 404, origin));
