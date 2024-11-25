@@ -56,10 +56,11 @@ self.addEventListener('fetch', async (event) => {
   const origin = headers.get('Origin');
   const cors_origin = event.request.headers.get('Origin');
 
-  // Handle CORS preflight requests // REMOVE || true
+  // Handle CORS preflight requests // REMOVE && true
   if (event.request.method === 'OPTIONS') {
-    if (cors_origin === allowedOrigin || true ) {
-      event.respondWith(createResponse(null, 204, origin));
+    // if (cors_origin === allowedOrigin) {
+    if (true) {
+      event.respondWith(createResponse({res: "WORKING - ALLOWED"}, 204, origin));
     } else {
       event.respondWith(createResponse({ error: `x1 Access denied from origin: cors: ${cors_origin}, ${origin}` }, 403));
     }
@@ -67,7 +68,9 @@ self.addEventListener('fetch', async (event) => {
   }
 
   // Restrict access to allowed origin // REMOVE || true
-  if (origin !== allowedOrigin || true ) {
+//  if (origin !== allowedOrigin || true ) {
+  if ( false ) {
+
     event.respondWith(createResponse({ error: `x2 Access denied from origin: ${origin}, cors: ${cors_origin}` }, 403));
     //event.respondWith(new Response('Forbidden', { status: 403 }));
     return;
