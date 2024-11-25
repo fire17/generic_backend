@@ -27,9 +27,10 @@
         async function handleRequest(event) {
             event.preventDefault();
             const url = new URL(window.location.href);
-            const path = url.pathname;
+            var path = url.pathname;
             const method = event.data?.method || 'GET';
-
+            path += "/todos"
+            
             // Handle OPTIONS preflight requests
             if (method === 'OPTIONS') {
                 return new Response(null, { headers });
