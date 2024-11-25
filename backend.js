@@ -1,8 +1,8 @@
 import bcrypt from 'https://cdn.skypack.dev/bcryptjs';
 
-const sharedSecret = 'your-shared-secret'; // Replace with your secure shared secret
-const upstashUrl = 'https://your-upstash-url'; // Replace with your Upstash Redis REST API URL
-const upstashToken = 'your-upstash-token'; // Replace with your Upstash Redis token
+// const sharedSecret = 'your-shared-secret'; // Replace with your secure shared secret
+const upstashUrl = 'live-dog-21100.upstash.io'; // Replace with your Upstash Redis REST API URL
+const upstashToken = 'AVJsAAIjcDEwZjBlYzU5NjA4MDY0ZDAzYjBmZTIyMWNhNWMxYTIzMnAxMA'; // Replace with your Upstash Redis token
 const tokenExpirationMinutes = 30;
 
 // Helper function to create a response
