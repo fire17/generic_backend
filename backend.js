@@ -17,21 +17,41 @@ async function redisRequest(command, ...args) {
 
 self.addEventListener('fetch', async (event) => {
   const url = new URL(event.request.url);
-  const path = url.pathname.slice(1);
+  const path = url.pathname.slice(1); // Remove leading slash
 
   if (path === 'todos') {
     if (event.request.method === 'GET') {
       const todos = await redisRequest('lrange', 'todos', 0, -1);
       const todoList = todos.result.map(text => ({ text }));
-      event.respondWith(new Response(JSON.stringify(todoList), { status: 200 }));
+      event.respondWith(
+        new Response(JSON.stringify(todoList), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        })
+      );
     } else if (event.request.method === 'POST') {
       const { text } = await event.request.json();
       await redisRequest('rpush', 'todos', text);
-      event.respondWith(new Response(JSON.stringify({ success: true }), { status: 200 }));
+      event.respondWith(
+        new Response(JSON.stringify({ success: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        })
+      );
     } else {
-      event.respondWith(new Response(null, { status: 405 })); // Method Not Allowed
+      event.respondWith(
+        new Response(JSON.stringify({ error: 'Method not allowed' }), {
+          status: 405,
+          headers: { 'Access-Control-Allow-Origin': '*' },
+        })
+      );
     }
   } else {
-    event.respondWith(new Response(null, { status: 404 })); // Not Found
+    event.respondWith(
+      new Response(JSON.stringify({ error: 'Not found' }), {
+        status: 404,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+      })
+    );
   }
 });
