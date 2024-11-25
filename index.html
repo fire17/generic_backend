@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Backend API</title>
+    <title>Todo Backend</title>
 </head>
 <body>
     <script>
@@ -14,27 +14,20 @@
         ];
         let nextId = 3;
 
-        // CORS headers
-        const headers = {
-//            'Access-Control-Allow-Origin': 'https://front.akeyo.io',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
-            'Content-Type': 'application/json'
-        };
-
         // Handle all requests
         async function handleRequest(event) {
             event.preventDefault();
-            const url = new URL(window.location.href);
-            var path = url.pathname;
+
+            // Allow any origin
+            const headers = {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': '*',
+                'Access-Control-Allow-Headers': '*'
+            };
+
+            const path = window.location.pathname;
             const method = event.data?.method || 'GET';
-            path += "/todos"
-            
-            // Handle OPTIONS preflight requests
-            if (method === 'OPTIONS') {
-                return new Response(null, { headers });
-            }
 
             // Route handling
             if (path === '/todos' && method === 'GET') {
@@ -42,35 +35,54 @@
             }
             
             if (path === '/todos' && method === 'POST') {
-                const body = JSON.parse(event.data.body);
-                const newTodo = {
-                    id: nextId++,
-                    text: body.text,
-                    createdAt: new Date().toISOString()
-                };
-                todos.push(newTodo);
-                return new Response(JSON.stringify({ success: true }), { headers });
+                try {
+                    const body = JSON.parse(event.data.body);
+                    const newTodo = {
+                        id: nextId++,
+                        text: body.text,
+                        createdAt: new Date().toISOString()
+                    };
+                    todos.push(newTodo);
+                    return new Response(JSON.stringify({ success: true }), { headers });
+                } catch (error) {
+                    return new Response(JSON.stringify({ success: false, error: 'Invalid request' }), { 
+                        headers,
+                        status: 400 
+                    });
+                }
             }
             
             if (path.startsWith('/todos/') && method === 'PUT') {
-                const id = parseInt(path.split('/')[2]);
-                const body = JSON.parse(event.data.body);
-                const todoIndex = todos.findIndex(t => t.id === id);
-                
-                if (todoIndex !== -1) {
-                    todos[todoIndex] = {
-                        ...todos[todoIndex],
-                        text: body.text
-                    };
-                    return new Response(JSON.stringify({ success: true }), { headers });
+                try {
+                    const id = parseInt(path.split('/')[2]);
+                    const body = JSON.parse(event.data.body);
+                    const todoIndex = todos.findIndex(t => t.id === id);
+                    
+                    if (todoIndex !== -1) {
+                        todos[todoIndex] = {
+                            ...todos[todoIndex],
+                            text: body.text
+                        };
+                        return new Response(JSON.stringify({ success: true }), { headers });
+                    }
+                    return new Response(JSON.stringify({ success: false }), { headers });
+                } catch (error) {
+                    return new Response(JSON.stringify({ success: false, error: 'Invalid request' }), { 
+                        headers,
+                        status: 400 
+                    });
                 }
-                return new Response(JSON.stringify({ success: false }), { headers });
             }
             
             if (path.startsWith('/todos/') && method === 'DELETE') {
                 const id = parseInt(path.split('/')[2]);
                 todos = todos.filter(t => t.id !== id);
                 return new Response(JSON.stringify({ success: true }), { headers });
+            }
+
+            // Handle OPTIONS requests
+            if (method === 'OPTIONS') {
+                return new Response(null, { headers });
             }
 
             return new Response(JSON.stringify({ error: 'Not Found' }), { 
