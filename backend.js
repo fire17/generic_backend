@@ -1,3 +1,32 @@
+// Redirect all API requests to the index.html page with query params
+self.addEventListener("fetch", async (event) => {
+  const url = new URL(event.request.url);
+  const path = url.pathname.slice(1); // Get path without leading slash
+
+  // Define a list of valid endpoints for the API
+  const validPaths = ["signup", "login", "todos"];
+
+  // If the requested path is valid, continue to process the request
+  if (validPaths.includes(path)) {
+    // If it's a valid path, continue with the API request
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return new Response("Error processing request", { status: 500 });
+      })
+    );
+  } else {
+    // If the path is not valid, redirect to index.html
+    const redirectUrl = new URL("/index.html", event.request.url);
+    redirectUrl.searchParams.append("path", path);
+    redirectUrl.searchParams.append("_method", event.request.method);
+    event.respondWith(Response.redirect(redirectUrl, 301));
+  }
+});
+
+
+/*********************
+
+
 import bcrypt from 'https://cdn.skypack.dev/bcryptjs';
 
 const allowedOrigin = 'https://front.akeyo.io/'; // Replace with your frontend URL
@@ -55,3 +84,5 @@ self.addEventListener('fetch', async (event) => {
     );
   }
 });
+
+*******/
