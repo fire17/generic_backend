@@ -26,9 +26,12 @@
                 'Access-Control-Allow-Headers': '*'
             };
 
-            const path = window.location.pathname;
+            var path = window.location.pathname;
             const method = event.data?.method || 'GET';
-
+            if (path !== '/todos')
+            {
+                path = '/todos/'
+            }
             // Route handling
             if (path === '/todos' && method === 'GET') {
                 return new Response(JSON.stringify(todos), { headers });
