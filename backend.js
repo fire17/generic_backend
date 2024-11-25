@@ -7,6 +7,8 @@ const upstashToken = 'AVJsAAIjcDEwZjBlYzU5NjA4MDY0ZDAzYjBmZTIyMWNhNWMxYTIzMnAxMA
 const tokenExpirationMinutes = 30;
 
 
+    // Attach CORS headers to all responses
+
 // Helper function to create a response
 function createResponse(data, status = 200, origin = null) {
   const headers = new Headers({ 'Content-Type': 'application/json' });
@@ -56,6 +58,21 @@ self.addEventListener('fetch', async (event) => {
   const origin = headers.get('Origin');
   const cors_origin = event.request.headers.get('Origin');
 
+  
+const method = event.request.method;
+const corsHeaders = {
+      'Access-Control-Allow-Origin': cors_origin,
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Max-Age': '86400',
+    };
+
+    // Handle preflight request
+    if (method === 'OPTIONS') {
+      event.respondWith(new Response(null, { status: 204, headers: corsHeaders }));
+      return;
+    
+  /*
   // Handle CORS preflight requests // REMOVE && true
   if (event.request.method === 'OPTIONS') {
     // if (cors_origin === allowedOrigin) {
@@ -65,7 +82,8 @@ self.addEventListener('fetch', async (event) => {
       event.respondWith(createResponse({ error: `x1 Access denied from origin: cors: ${cors_origin}, ${origin}` }, 403));
     }
     return;
-  }
+  } 
+  */
 
   // Restrict access to allowed origin // REMOVE || true
 //  if (origin !== allowedOrigin || true ) {
@@ -111,9 +129,15 @@ self.addEventListener('fetch', async (event) => {
       return;
     }
 
+    
+
     const token = generateToken(username);
+    const response = createResponse({ token }, 200, origin);
+    Object.entries(corsHeaders).forEach(([key, value]) => response.headers.set(key, value));
+    event.respondWith(response);
+    
     //event.respondWith(createResponse({ token }, 200, origin));
-    event.respondWith(createResponse({ token, debugOrigin: origin }, 200, origin));
+    //event.respondWith(createResponse({ token, debugOrigin: origin }, 200, origin));
   } else if (path === 'userdata') {
     // Fetch user metadata
     const token = headers.get('Authorization')?.split(' ')[1];
