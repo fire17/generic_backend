@@ -53,20 +53,22 @@ self.addEventListener('fetch', async (event) => {
   const path = url.pathname.slice(1); // Remove leading slash
   const headers = event.request.headers;
   const origin = headers.get('Origin');
+  const cors_origin = event.request.headers.get('Origin');
 
   // Handle CORS preflight requests
   if (event.request.method === 'OPTIONS') {
-    if (origin === allowedOrigin) {
+    if (cors_origin === allowedOrigin) {
       event.respondWith(createResponse(null, 204, origin));
     } else {
-      event.respondWith(new Response('Forbidden', { status: 403 }));
+      event.respondWith(createResponse({ error: `x1 Access denied from origin: cors: ${cors_origin}, ${origin}` }, 403));
     }
     return;
   }
 
   // Restrict access to allowed origin
   if (origin !== allowedOrigin) {
-    event.respondWith(new Response('Forbidden', { status: 403 }));
+    event.respondWith(createResponse({ error: `x2 Access denied from origin: ${origin}, cors: ${cors_origin}` }, 403));
+    //event.respondWith(new Response('Forbidden', { status: 403 }));
     return;
   }
 
