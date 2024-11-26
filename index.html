@@ -11,20 +11,20 @@
             ]
         };
 
-        // Helper to parse URL query parameters
-        function getQueryParams() {
-            const hash = window.location.hash.substring(1);
-            return Object.fromEntries(new URLSearchParams(hash));
-        }
+        // Listen for messages from frontend
+        window.addEventListener('message', (event) => {
+            if (event.origin === 'https://front.akeyo.io') {
+                const response = handleRequest(event.data);
+                event.source.postMessage(response, event.origin);
+            }
+        });
 
         // Handle API requests
-        function handleRequest() {
-            const params = getQueryParams();
-            const action = params.action;
+        function handleRequest(request) {
             const response = { success: true, data: null, error: null };
 
             try {
-                switch (action) {
+                switch (request.action) {
                     case 'getTodos':
                         response.data = mockDb.todos;
                         break;
@@ -32,7 +32,7 @@
                     case 'addTodo':
                         const newTodo = {
                             id: mockDb.todos.length + 1,
-                            text: params.text,
+                            text: request.text,
                             completed: false,
                             createdAt: new Date().toISOString()
                         };
@@ -41,11 +41,11 @@
                         break;
 
                     case 'updateTodo':
-                        const todoId = parseInt(params.id);
+                        const todoId = parseInt(request.id);
                         const todo = mockDb.todos.find(t => t.id === todoId);
                         if (todo) {
-                            todo.completed = params.completed === 'true';
-                            if (params.text) todo.text = params.text;
+                            todo.completed = request.completed === 'true';
+                            if (request.text) todo.text = request.text;
                             response.data = todo;
                         } else {
                             throw new Error('Todo not found');
@@ -53,7 +53,7 @@
                         break;
 
                     case 'deleteTodo':
-                        const deleteId = parseInt(params.id);
+                        const deleteId = parseInt(request.id);
                         const index = mockDb.todos.findIndex(t => t.id === deleteId);
                         if (index !== -1) {
                             mockDb.todos.splice(index, 1);
@@ -71,16 +71,8 @@
                 response.error = error.message;
             }
 
-            // Send response back to parent window
-            window.parent.postMessage(response, 'https://front.akeyo.io');
+            return response;
         }
-
-        // Listen for messages from frontend
-        window.addEventListener('message', (event) => {
-            if (event.origin === 'https://front.akeyo.io') {
-                handleRequest();
-            }
-        });
     </script>
 </head>
 <body>
