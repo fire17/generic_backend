@@ -7,20 +7,23 @@
 </head>
 <body>
     <script>
-        // Mock todos database
         const mockTodos = [{ text: "Learn JavaScript" }, { text: "Build a todo app" }];
 
         function handleRequest() {
             const urlParams = new URLSearchParams(window.location.search);
             const action = urlParams.get('action');
-            const response = {};
+            const callback = urlParams.get('callback');
+            let response = {};
 
             if (action === 'getTodos') {
-                response.data = mockTodos;
+                response = mockTodos;
             } else if (action === 'addTodo') {
-                const newTodo = JSON.parse(window.localStorage.getItem('newTodo'));
-                mockTodos.push(newTodo);
-                response.data = newTodo;
+                const text = urlParams.get('text');
+                if (text) {
+                    const newTodo = { text };
+                    mockTodos.push(newTodo);
+                    response = mockTodos;
+                }
             } else if (action === 'removeTodo') {
                 const index = parseInt(urlParams.get('index'), 10);
                 if (index >= 0 && index < mockTodos.length) {
@@ -32,10 +35,14 @@
                 response.error = 'Unknown action';
             }
 
-            document.write(JSON.stringify(response));
+            // JSON response
+            if (callback) {
+                document.write(`${callback}(${JSON.stringify(response)})`);
+            }
         }
 
         handleRequest();
     </script>
 </body>
 </html>
+
