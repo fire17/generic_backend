@@ -1,82 +1,41 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Backend API</title>
-    <script>
-        // Mock data store
-        const mockDb = {
-            todos: [
-                { id: 1, text: "Buy groceries", completed: false, createdAt: "2024-11-26T10:00:00Z" },
-                { id: 2, text: "Walk the dog", completed: true, createdAt: "2024-11-26T11:00:00Z" }
-            ]
-        };
-
-        // Listen for messages from frontend
-        window.addEventListener('message', (event) => {
-            if (event.origin === 'https://front.akeyo.io') {
-                const response = handleRequest(event.data);
-                event.source.postMessage(response, event.origin);
-            }
-        });
-
-        // Handle API requests
-        function handleRequest(request) {
-            const response = { success: true, data: null, error: null };
-
-            try {
-                switch (request.action) {
-                    case 'getTodos':
-                        response.data = mockDb.todos;
-                        break;
-
-                    case 'addTodo':
-                        const newTodo = {
-                            id: mockDb.todos.length + 1,
-                            text: request.text,
-                            completed: false,
-                            createdAt: new Date().toISOString()
-                        };
-                        mockDb.todos.push(newTodo);
-                        response.data = newTodo;
-                        break;
-
-                    case 'updateTodo':
-                        const todoId = parseInt(request.id);
-                        const todo = mockDb.todos.find(t => t.id === todoId);
-                        if (todo) {
-                            todo.completed = request.completed === 'true';
-                            if (request.text) todo.text = request.text;
-                            response.data = todo;
-                        } else {
-                            throw new Error('Todo not found');
-                        }
-                        break;
-
-                    case 'deleteTodo':
-                        const deleteId = parseInt(request.id);
-                        const index = mockDb.todos.findIndex(t => t.id === deleteId);
-                        if (index !== -1) {
-                            mockDb.todos.splice(index, 1);
-                            response.data = { id: deleteId };
-                        } else {
-                            throw new Error('Todo not found');
-                        }
-                        break;
-
-                    default:
-                        throw new Error('Invalid action');
-                }
-            } catch (error) {
-                response.success = false;
-                response.error = error.message;
-            }
-
-            return response;
-        }
-    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backend</title>
 </head>
 <body>
-    <h1>Backend API</h1>
-    <p>This page serves as a mock API endpoint.</p>
+    <script>
+        // Mock todos database
+        const mockTodos = [{ text: "Learn JavaScript" }, { text: "Build a todo app" }];
+
+        function handleRequest() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const action = urlParams.get('action');
+            const response = {};
+
+            if (action === 'getTodos') {
+                response.data = mockTodos;
+            } else if (action === 'addTodo') {
+                const newTodo = JSON.parse(window.localStorage.getItem('newTodo'));
+                mockTodos.push(newTodo);
+                response.data = newTodo;
+            } else if (action === 'removeTodo') {
+                const index = parseInt(urlParams.get('index'), 10);
+                if (index >= 0 && index < mockTodos.length) {
+                    response.data = mockTodos.splice(index, 1);
+                } else {
+                    response.error = 'Invalid index';
+                }
+            } else {
+                response.error = 'Unknown action';
+            }
+
+            document.write(JSON.stringify(response));
+        }
+
+        handleRequest();
+    </script>
 </body>
 </html>
