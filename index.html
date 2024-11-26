@@ -1,106 +1,90 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Todo Backend</title>
-</head>
-<body>
+    <title>Backend API</title>
     <script>
-        // Mock database
-        let todos = [
-            { id: 1, text: "Example todo 1", createdAt: new Date().toISOString() },
-            { id: 2, text: "Example todo 2", createdAt: new Date().toISOString() }
-        ];
-        let nextId = 3;
+        // Mock data store
+        const mockDb = {
+            todos: [
+                { id: 1, text: "Buy groceries", completed: false, createdAt: "2024-11-26T10:00:00Z" },
+                { id: 2, text: "Walk the dog", completed: true, createdAt: "2024-11-26T11:00:00Z" }
+            ]
+        };
 
-        // Handle all requests
-        async function handleRequest(event) {
-            event.preventDefault();
-
-            // Allow any origin
-            const headers = {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': '*',
-                'Access-Control-Allow-Headers': '*'
-            };
-
-            var path = window.location.pathname;
-            const method = event.data?.method || 'GET';
-            if (path !== '/todos')
-            {
-                path = '/todos/'
-            }
-            // Route handling
-            if (path === '/todos' && method === 'GET') {
-                return new Response(JSON.stringify(todos), { headers });
-            }
-            
-            if (path === '/todos' && method === 'POST') {
-                try {
-                    const body = JSON.parse(event.data.body);
-                    const newTodo = {
-                        id: nextId++,
-                        text: body.text,
-                        createdAt: new Date().toISOString()
-                    };
-                    todos.push(newTodo);
-                    return new Response(JSON.stringify({ success: true }), { headers });
-                } catch (error) {
-                    return new Response(JSON.stringify({ success: false, error: 'Invalid request' }), { 
-                        headers,
-                        status: 400 
-                    });
-                }
-            }
-            
-            if (path.startsWith('/todos/') && method === 'PUT') {
-                try {
-                    const id = parseInt(path.split('/')[2]);
-                    const body = JSON.parse(event.data.body);
-                    const todoIndex = todos.findIndex(t => t.id === id);
-                    
-                    if (todoIndex !== -1) {
-                        todos[todoIndex] = {
-                            ...todos[todoIndex],
-                            text: body.text
-                        };
-                        return new Response(JSON.stringify({ success: true }), { headers });
-                    }
-                    return new Response(JSON.stringify({ success: false }), { headers });
-                } catch (error) {
-                    return new Response(JSON.stringify({ success: false, error: 'Invalid request' }), { 
-                        headers,
-                        status: 400 
-                    });
-                }
-            }
-            
-            if (path.startsWith('/todos/') && method === 'DELETE') {
-                const id = parseInt(path.split('/')[2]);
-                todos = todos.filter(t => t.id !== id);
-                return new Response(JSON.stringify({ success: true }), { headers });
-            }
-
-            // Handle OPTIONS requests
-            if (method === 'OPTIONS') {
-                return new Response(null, { headers });
-            }
-
-            return new Response(JSON.stringify({ error: 'Not Found' }), { 
-                headers,
-                status: 404 
-            });
+        // Helper to parse URL query parameters
+        function getQueryParams() {
+            const hash = window.location.hash.substring(1);
+            return Object.fromEntries(new URLSearchParams(hash));
         }
 
-        // Listen for requests
-        window.addEventListener('message', handleRequest);
-        
-        // Initial setup to handle direct requests
-        window.onload = () => {
-            handleRequest({ preventDefault: () => {}, data: null });
-        };
+        // Handle API requests
+        function handleRequest() {
+            const params = getQueryParams();
+            const action = params.action;
+            const response = { success: true, data: null, error: null };
+
+            try {
+                switch (action) {
+                    case 'getTodos':
+                        response.data = mockDb.todos;
+                        break;
+
+                    case 'addTodo':
+                        const newTodo = {
+                            id: mockDb.todos.length + 1,
+                            text: params.text,
+                            completed: false,
+                            createdAt: new Date().toISOString()
+                        };
+                        mockDb.todos.push(newTodo);
+                        response.data = newTodo;
+                        break;
+
+                    case 'updateTodo':
+                        const todoId = parseInt(params.id);
+                        const todo = mockDb.todos.find(t => t.id === todoId);
+                        if (todo) {
+                            todo.completed = params.completed === 'true';
+                            if (params.text) todo.text = params.text;
+                            response.data = todo;
+                        } else {
+                            throw new Error('Todo not found');
+                        }
+                        break;
+
+                    case 'deleteTodo':
+                        const deleteId = parseInt(params.id);
+                        const index = mockDb.todos.findIndex(t => t.id === deleteId);
+                        if (index !== -1) {
+                            mockDb.todos.splice(index, 1);
+                            response.data = { id: deleteId };
+                        } else {
+                            throw new Error('Todo not found');
+                        }
+                        break;
+
+                    default:
+                        throw new Error('Invalid action');
+                }
+            } catch (error) {
+                response.success = false;
+                response.error = error.message;
+            }
+
+            // Send response back to parent window
+            window.parent.postMessage(response, 'https://front.akeyo.io');
+        }
+
+        // Listen for messages from frontend
+        window.addEventListener('message', (event) => {
+            if (event.origin === 'https://front.akeyo.io') {
+                handleRequest();
+            }
+        });
     </script>
+</head>
+<body>
+    <h1>Backend API</h1>
+    <p>This page serves as a mock API endpoint.</p>
 </body>
 </html>
