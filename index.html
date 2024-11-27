@@ -1,48 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Backend</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Backend</title>
 </head>
 <body>
-    <script>
-        const mockTodos = [{ text: "Learn JavaScript" }, { text: "Build a todo app" }];
+  <script>
+    // Mock Data
+    const mockUsers = [
+      { id: "1", username: "user1", password: "pass1" },
+      { id: "2", username: "user2", password: "pass2" }
+    ];
 
-        function handleRequest() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const action = urlParams.get('action');
-            const callback = urlParams.get('callback');
-            let response = {};
+    const mockTodos = {
+      "1": [{ id: "t1", task: "Learn GitHub Pages", done: false }],
+      "2": [{ id: "t2", task: "Build SPA App", done: true }]
+    };
 
-            if (action === 'getTodos') {
-                response = mockTodos;
-            } else if (action === 'addTodo') {
-                const text = urlParams.get('text');
-                if (text) {
-                    const newTodo = { text };
-                    mockTodos.push(newTodo);
-                    response = mockTodos;
-                }
-            } else if (action === 'removeTodo') {
-                const index = parseInt(urlParams.get('index'), 10);
-                if (index >= 0 && index < mockTodos.length) {
-                    response.data = mockTodos.splice(index, 1);
-                } else {
-                    response.error = 'Invalid index';
-                }
-            } else {
-                response.error = 'Unknown action';
-            }
+    const log = [];
+    const logAction = (action, data) => log.push({ timestamp: new Date(), action, data });
 
-            // JSON response
-            if (callback) {
-                document.write(`${callback}(${JSON.stringify(response)})`);
-            }
-        }
+    // Routing
+    const urlParams = new URLSearchParams(window.location.search);
+    const endpoint = urlParams.get("endpoint");
+    const username = urlParams.get("username");
+    const password = urlParams.get("password");
+    const userId = urlParams.get("userId");
 
-        handleRequest();
-    </script>
+    let response = {};
+
+    switch (endpoint) {
+      case "signup":
+        response = { success: true, message: "Signup mock success." };
+        logAction("signup", { endpoint, response });
+        break;
+
+      case "login":
+        const user = mockUsers.find(u => u.username === username && u.password === password);
+        response = user
+          ? { success: true, user }
+          : { success: false, message: "Invalid credentials" };
+        logAction("login", { endpoint, username, response });
+        break;
+
+      case "todos":
+        response = { success: true, todos: mockTodos[userId] || [] };
+        logAction("todos", { endpoint, userId, response });
+        break;
+
+      case "logs":
+        response = { success: true, logs: log };
+        break;
+
+      default:
+        response = { success: false, message: "Invalid endpoint" };
+        logAction("error", { endpoint, response });
+    }
+
+    // Return JSON Response
+    document.body.textContent = JSON.stringify(response);
+  </script>
 </body>
 </html>
-
