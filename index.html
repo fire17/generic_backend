@@ -1,73 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Backend</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DXOS Server</title>
 </head>
 <body>
-  <script type="module">
-    import dxosClientServices from 'https://cdn.jsdelivr.net/npm/@dxos/client-services@0.7.1/+esm';
+    <h1>DXOS Server</h1>
+    <div id="status">Server is running...</div>
 
-    const dxosClient = await dxosClientServices();
-    await dxosClient.initialize();
-    const dxosLog = dxosClient.getLogger('backend');
+    <script type="module">
+        import dxosClientServices from 'https://cdn.jsdelivr.net/npm/@dxos/client-services@0.7.1/+esm';
 
-    // Mock Data
-    const mockUsers = [
-      { id: "1", username: "user1", password: "pass1" },
-      { id: "2", username: "user2", password: "pass2" }
-    ];
+        const { createSpace, createInvitation, createDocument } = dxosClientServices;
 
-    const mockTodos = {
-      "1": [{ id: "t1", task: "Learn GitHub Pages", done: false }],
-      "2": [{ id: "t2", task: "Build SPA App", done: true }]
-    };
+        let serverSpace;
+        let invitationCode;
 
-    const logAction = async (action, data) => {
-      dxosLog.log(action, data);
-    };
+        async function initializeServer() {
+            serverSpace = await createSpace();
+            invitationCode = await createInvitation(serverSpace);
+            
+            // Endpoint to serve the invitation code
+            if (typeof window.handleInvitationRequest === 'undefined') {
+                window.handleInvitationRequest = (request) => {
+                    if (request.url.endsWith('/invitation')) {
+                        return new Response(invitationCode, { status: 200 });
+                    }
+                };
+            }
 
-    // Routing
-    const urlParams = new URLSearchParams(window.location.search);
-    const endpoint = urlParams.get("endpoint");
-    const username = urlParams.get("username");
-    const password = urlParams.get("password");
-    const userId = urlParams.get("userId");
+            // Create a hello document when a client joins
+            serverSpace.on('peer:join', async () => {
+                await createDocument(serverSpace, { type: 'hello', content: 'Hello from the server!' });
+            });
+        }
 
-    let response = {};
-
-    switch (endpoint) {
-      case "signup":
-        response = { success: true, message: "Signup mock success." };
-        await logAction("signup", { endpoint, response });
-        break;
-
-      case "login":
-        const user = mockUsers.find(u => u.username === username && u.password === password);
-        response = user
-          ? { success: true, user }
-          : { success: false, message: "Invalid credentials" };
-        await logAction("login", { endpoint, username, response });
-        break;
-
-      case "todos":
-        response = { success: true, todos: mockTodos[userId] || [] };
-        await logAction("todos", { endpoint, userId, response });
-        break;
-
-      case "publicTodos":
-        response = { success: true, todos: [{ id: "t0", task: "Explore App", done: false }] };
-        await logAction("publicTodos", { endpoint, response });
-        break;
-
-      default:
-        response = { success: false, message: "Invalid endpoint" };
-        await logAction("error", { endpoint, response });
-    }
-
-    // Return JSON Response
-    document.body.textContent = JSON.stringify(response);
-  </script>
+        initializeServer();
+    </script>
 </body>
 </html>
