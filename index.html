@@ -6,7 +6,13 @@
   <title>Backend</title>
 </head>
 <body>
-  <script>
+  <script type="module">
+    import dxosClientServices from 'https://cdn.jsdelivr.net/npm/@dxos/client-services@0.7.1/+esm';
+
+    const dxosClient = await dxosClientServices();
+    await dxosClient.initialize();
+    const dxosLog = dxosClient.getLogger('backend');
+
     // Mock Data
     const mockUsers = [
       { id: "1", username: "user1", password: "pass1" },
@@ -18,8 +24,9 @@
       "2": [{ id: "t2", task: "Build SPA App", done: true }]
     };
 
-    const log = [];
-    const logAction = (action, data) => log.push({ timestamp: new Date(), action, data });
+    const logAction = async (action, data) => {
+      dxosLog.log(action, data);
+    };
 
     // Routing
     const urlParams = new URLSearchParams(window.location.search);
@@ -33,7 +40,7 @@
     switch (endpoint) {
       case "signup":
         response = { success: true, message: "Signup mock success." };
-        logAction("signup", { endpoint, response });
+        await logAction("signup", { endpoint, response });
         break;
 
       case "login":
@@ -41,21 +48,22 @@
         response = user
           ? { success: true, user }
           : { success: false, message: "Invalid credentials" };
-        logAction("login", { endpoint, username, response });
+        await logAction("login", { endpoint, username, response });
         break;
 
       case "todos":
         response = { success: true, todos: mockTodos[userId] || [] };
-        logAction("todos", { endpoint, userId, response });
+        await logAction("todos", { endpoint, userId, response });
         break;
 
-      case "logs":
-        response = { success: true, logs: log };
+      case "publicTodos":
+        response = { success: true, todos: [{ id: "t0", task: "Explore App", done: false }] };
+        await logAction("publicTodos", { endpoint, response });
         break;
 
       default:
         response = { success: false, message: "Invalid endpoint" };
-        logAction("error", { endpoint, response });
+        await logAction("error", { endpoint, response });
     }
 
     // Return JSON Response
